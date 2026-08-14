@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Cutzi - v99.1 CLEAN TEST - NL/FR - Mobile</title>
+<title>Cutzi - v100.1 ONLINE SHARED TEST - NL/FR - Mobile Fix</title>
 <meta name="theme-color" content="#ef5da8">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2462,6 +2462,59 @@ body[data-glass="light"] .sidebar-account-nav-v88{border-top:0}
 }
 @media(max-width:520px){.stock-kpis-v72{grid-template-columns:1fr!important}}
 </style>
+
+<style id="cutziV1001MobileFix">
+/* v100.1 — mobile vertical scroll + compact/readable agenda. */
+@media(max-width:820px){
+  html{height:auto!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important}
+  body{height:auto!important;min-height:100dvh!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior-y:auto!important;-webkit-overflow-scrolling:touch}
+  .app{height:auto!important;min-height:100dvh!important;overflow:visible!important}
+  .main,.view.active{overflow:visible!important}
+
+  /* Agenda toolbar: two clean rows on a phone. */
+  #view-agenda .agenda-shell{min-height:0!important;overflow:visible!important}
+  #view-agenda .agenda-toolbar{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;align-items:center!important;gap:8px!important;padding:9px!important;min-height:0!important}
+  #view-agenda .date-nav{grid-column:1;grid-row:1;min-width:auto!important;flex:none!important}
+  #view-agenda .date-title{grid-column:2;grid-row:1;min-width:0!important;padding:0 2px!important}
+  #view-agenda .date-title strong{font-size:15px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #view-agenda .date-title small{font-size:10.5px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  #view-agenda .agenda-view-switch{grid-column:1/-1;grid-row:2;order:unset!important;width:100%!important;max-width:100%!important;overflow-x:auto!important;justify-content:flex-start!important;-webkit-overflow-scrolling:touch}
+  #view-agenda .agenda-view-switch button{flex:0 0 auto;height:36px!important;padding:0 11px!important;font-size:11px!important}
+  #view-agenda .agenda-color-style-v71,#view-agenda .agenda-actions{display:none!important}
+
+  /* Day view: page scrolls vertically; agenda itself only needs horizontal panning. */
+  #view-agenda .agenda-body{max-height:none!important;min-height:0!important}
+  #view-agenda .agenda-body:not(.overview-mode){grid-template-columns:52px minmax(0,1fr)!important;width:100%!important;max-width:100%!important;overflow-x:auto!important;overflow-y:visible!important;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+  #view-agenda .schedule{min-width:max(100%,calc(var(--agenda-columns,1) * 160px))!important}
+  #view-agenda .staff-head,#view-agenda .grid-canvas{grid-template-columns:repeat(var(--agenda-columns,1),minmax(160px,1fr))!important}
+  #view-agenda .staff-head{height:58px!important}
+  #view-agenda .time-col{padding-top:58px!important;z-index:8!important;background:rgba(13,14,17,.92)!important}
+  #view-agenda .time-label{font-size:10px!important}
+  #view-agenda .staff{padding:0 8px!important;gap:7px!important}
+  #view-agenda .staff .avatar{width:28px!important;height:28px!important;border-radius:9px!important;font-size:9px!important}
+  #view-agenda .staff strong{font-size:11px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #view-agenda .staff small{font-size:8.5px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #view-agenda .appt{left:4px!important;right:4px!important;padding:6px 7px 6px 9px!important}
+  #view-agenda .appt-card-head-v68 strong{font-size:11px!important}
+  #view-agenda .appt-service-v68{font-size:9.5px!important}
+  #view-agenda .appt-phase-v68{font-size:8.8px!important}
+
+  /* Multi-day / month / year views remain usable without trapping vertical scroll. */
+  #view-agenda .agenda-body.overview-mode{max-height:none!important;overflow:visible!important;padding:10px!important}
+  #view-agenda .agenda-range-grid.week{grid-template-columns:repeat(7,minmax(150px,1fr))!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  #view-agenda .agenda-month{overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+  #view-agenda .agenda-month-weekdays,#view-agenda .agenda-month-grid{min-width:630px!important}
+  #view-agenda .agenda-year-grid{grid-template-columns:1fr!important}
+
+  .agenda-empty-v1001{min-height:250px;padding:28px 18px;display:grid;place-items:center;align-content:center;text-align:center;gap:8px;color:var(--muted);font-size:12px;line-height:1.5}
+  .agenda-empty-v1001 strong{display:block;color:var(--text);font-size:17px;font-weight:600}
+}
+@media(max-width:430px){
+  #view-agenda .schedule{min-width:max(100%,calc(var(--agenda-columns,1) * 150px))!important}
+  #view-agenda .staff-head,#view-agenda .grid-canvas{grid-template-columns:repeat(var(--agenda-columns,1),minmax(150px,1fr))!important}
+}
+</style>
+
 </head>
 <body data-storage-mode="cloud">
 <div class="bg-scene" id="bgScene"></div>
@@ -4444,6 +4497,7 @@ renderAgendaDay=function(){
   const body=document.querySelector('.agenda-body');body.className='agenda-body';body.innerHTML=agendaDayBodyMarkup();const hours=openingHoursForDate(agendaDate)||{open:false,start:'09:00',end:'18:00'},dateTitle=document.querySelector('.date-title');dateTitle.innerHTML=`<strong>${niceDate(agendaDate)}</strong><small>${state.settings.scheduleMode==='biweekly'?'Week '+openingWeekForDate(agendaDate)+' · ':''}${hours.open?hours.start+' - '+hours.end:'Gesloten'}</small>`;
   const timeCol=body.querySelector('.time-col'),head=body.querySelector('.staff-head'),canvas=body.querySelector('.grid-canvas');
   if(!hours.open){timeCol.innerHTML='';head.innerHTML='';canvas.innerHTML='<div style="padding:36px;color:var(--muted);font-size:13px">Salon gesloten. Pas de openingstijden aan bij Instellingen.</div>';canvas.style.display='block';updateAgendaMoveBannerV68();return}
+  if(!state.employees.length){document.documentElement.style.setProperty('--agenda-columns',1);timeCol.innerHTML='';head.innerHTML='';canvas.style.display='block';canvas.style.height='auto';canvas.innerHTML='<div class="agenda-empty-v1001"><strong>Nog geen medewerkers</strong><span>Voeg eerst een medewerker toe bij Team & planning. Daarna verschijnt hier je dagagenda.</span></div>';updateAgendaMoveBannerV68();return}
   const start=Math.floor(toMin(hours.start)/60)*60,end=Math.ceil(toMin(hours.end)/60)*60,hoursCount=(end-start)/60,events={};state.employees.forEach(e=>events[e.id]=[]);
   const activeBookings=(state.bookings||[]).filter(b=>b.date===agendaDate&&!['cancelled','no_show'].includes(b.status));
   activeBookings.forEach(b=>(b.steps||[]).forEach((st,stepIndex)=>{if(st.employee)events[st.employee]?.push({start:st.start,end:st.end,label:b.client,sub:st.name,service:b.treatmentName,kind:eventKindFromStep(st),bookingId:b.id,bookingStatus:b.status||'booked',stepIndex,employeeId:st.employee});else{const prev=[...b.steps].reverse().find(x=>x.employee&&toMin(x.end)<=toMin(st.start));if(prev)events[prev.employee]?.push({start:st.start,end:st.end,label:b.client,sub:st.name,service:b.treatmentName,kind:'processing',nonblocking:true,bookingId:b.id,bookingStatus:b.status||'booked',stepIndex,employeeId:prev.employee})}}));
