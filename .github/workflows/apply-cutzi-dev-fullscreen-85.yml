@@ -25,3 +25,4 @@ jobs:
           git add public/index.html
           git commit -m "Set Cutzi dev fullscreen to 85 percent black"
           git push origin HEAD:main
+# retry after updater fix
