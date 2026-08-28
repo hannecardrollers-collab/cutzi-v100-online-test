@@ -1,0 +1,27 @@
+name: Apply Cutzi dev agenda polish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-cutzi-dev-agenda-polish.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply agenda polish
+        run: python .github/scripts/apply_cutzi_dev_agenda_polish.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/index.html
+          git commit -m "Polish Cutzi dev agenda fullscreen glass and closed-day copy"
+          git push origin HEAD:main
