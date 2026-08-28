@@ -1,0 +1,27 @@
+name: Apply Cutzi fullscreen visible glass
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-cutzi-dev-fullscreen-visible-glass.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply visible glass tweak
+        run: python .github/scripts/apply_cutzi_dev_fullscreen_visible_glass.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/index.html
+          git commit -m "Make Cutzi fullscreen transparency visibly glassy"
+          git push origin HEAD:main
