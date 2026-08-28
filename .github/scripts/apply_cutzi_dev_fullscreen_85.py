@@ -15,8 +15,7 @@ repls={
 'background:linear-gradient(145deg,rgba(18,19,23,.94),rgba(8,9,12,.90))!important;':'background:linear-gradient(145deg,rgba(18,19,23,.86),rgba(8,9,12,.82))!important;',
 'background:rgba(12,13,16,.78)!important;':'background:rgba(12,13,16,.72)!important;',
 'background:rgba(11,12,15,.82)!important;':'background:rgba(11,12,15,.76)!important;',
-'background:rgba(12,13,17,.84)!important;':'background:rgba(12,13,17,.78)!important;',
-'background-color:rgba(4,5,8,.70)!important;':'background-color:rgba(4,5,8,.60)!important;'
+'background:rgba(12,13,17,.84)!important;':'background:rgba(12,13,17,.78)!important;'
 }
 for old,new in repls.items():
     assert s.count(old)>=1, old
