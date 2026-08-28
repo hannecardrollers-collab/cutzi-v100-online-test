@@ -2586,9 +2586,12 @@ body.agenda-focus-v1006 .mobile-bottom-nav-v52,body.agenda-focus-v1006 .mobile-q
 <style id="cutziAgendaDevPolish">
 /* Cutzi dev — stronger glass visibility in agenda fullscreen + closed-day copy/layout polish. */
 body.agenda-focus-v1006 #view-agenda{
-  background:rgba(5,6,9,.85)!important;
-  backdrop-filter:blur(8px) saturate(108%)!important;
-  -webkit-backdrop-filter:blur(8px) saturate(108%)!important;
+  background:
+    radial-gradient(circle at 78% 18%,rgba(239,93,168,.085),transparent 34%),
+    radial-gradient(circle at 25% 80%,rgba(96,118,255,.065),transparent 38%),
+    rgba(5,6,9,.62)!important;
+  backdrop-filter:blur(8px) saturate(112%)!important;
+  -webkit-backdrop-filter:blur(8px) saturate(112%)!important;
 }
 body.agenda-focus-v1006 #agendaShell.glass{
   background:linear-gradient(145deg,rgba(18,19,23,.86),rgba(8,9,12,.82))!important;
