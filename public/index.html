@@ -2521,6 +2521,48 @@ body[data-glass="light"] .sidebar-account-nav-v88{border-top:0}
 }
 </style>
 
+<style id="cutziSidebarDensityV1003">
+/* v100.3 — desktop sidebar density based on the compact Cheffli rhythm.
+   Keep rows at their natural height instead of stretching them over the full sidebar. */
+@media(min-width:1101px){
+  .sidebar .brand{padding-bottom:12px!important}
+  .sidebar .navgroup{
+    align-content:start!important;
+    grid-auto-rows:max-content!important;
+    gap:2px!important;
+  }
+  .sidebar .navgroup>.navlabel{
+    padding:7px 11px 3px!important;
+    min-height:16px!important;
+    line-height:16px!important;
+  }
+  .sidebar .navgroup>.navlabel:first-child{
+    padding-top:4px!important;
+  }
+  .sidebar .navbtn{
+    height:38px!important;
+    min-height:38px!important;
+    border-radius:14px!important;
+  }
+  .sidebar-account-nav-v88{
+    align-content:start!important;
+    grid-auto-rows:max-content!important;
+    gap:2px!important;
+    margin-top:5px!important;
+    padding:6px 0 2px!important;
+  }
+  .sidebar-account-nav-v88 .navlabel{
+    min-height:16px!important;
+    line-height:16px!important;
+    padding:0 11px 3px!important;
+  }
+  .sidebar-account-footer{
+    margin-top:2px!important;
+    padding-top:6px!important;
+  }
+}
+</style>
+
 </head>
 <body data-storage-mode="cloud">
 <div class="bg-scene" id="bgScene"></div>
@@ -3114,9 +3156,11 @@ function logoutPrototype(){setAuthState(false);localStorage.removeItem(AUTH_ACTI
 function requestLogoutPrototype(){openAppConfirm('Uitloggen','Wil je nu echt uitloggen?',logoutPrototype,'Uitloggen')}
 function openLogin(){document.body.dataset.auth='out';closeSignupV24();setTimeout(()=>document.getElementById('loginEmail')?.focus(),70)}
 function closeLogin(){setAuthState(true);renderAccountFooter();goView('home')}
-function attemptLogin(){const email=(document.getElementById('loginEmail').value||'').trim().toLowerCase(),password=document.getElementById('loginPassword').value||'',error=document.getElementById('loginError');if(!email||!password){error.textContent='Vul je e-mailadres en wachtwoord in.';error.classList.add('show');return false}const accounts=loadPrototypeAccounts();if(!accounts.length){error.textContent='Nog geen lokaal account gevonden. Maak eerst een account aan.';error.classList.add('show');return false}const account=accounts.find(a=>String(a.email||'').toLowerCase()===email&&a.passwordFingerprint===prototypePasswordFingerprint(password));if(!account){error.textContent='E-mailadres of wachtwoord klopt niet.';error.classList.add('show');return false}localStorage.setItem(AUTH_ACTIVE_ACCOUNT_KEY,account.id);if(account.salonName){state.branding=state.branding||{};state.branding.salonName=account.salonName;persistState();renderBranding()}error.classList.remove('show');closeLogin();showToast('Welkom, '+(account.fullName?.split(/\s+/)[0]||account.fullName));return true}
+async function attemptLogin(){return attemptOnlineLoginV1005()}
 
 
+/* v100.4 LOGIN STABILITY — cloud auth is separated from the salon-state load, with cookie-safe retries. */
+/* v100.5 LOGIN FIX — one authoritative online login handler; legacy local auth can no longer intercept submit. */
 /* v100 ONLINE SHARED TEST — Cloudflare Pages Functions + D1.
    localStorage is only a fast device cache; D1 is the shared source of truth. */
 const CUTZI_ONLINE_API='/api';
@@ -3130,12 +3174,20 @@ let cutziCloudSavePending=false;
 let cutziCloudLastErrorAt=0;
 
 async function cutziApi(path,options={}){
-  const init={credentials:'same-origin',...options};
+  const init={credentials:'include',cache:'no-store',...options};
   init.headers={...(options.body?{'Content-Type':'application/json'}:{}),...(options.headers||{})};
   const res=await fetch(CUTZI_ONLINE_API+path,init);
   let data={};try{data=await res.json()}catch(_){data={}}
   if(!res.ok){const err=new Error(data?.error||'Cloud request failed');err.status=res.status;err.data=data;throw err}
   return data;
+}
+function cutziWaitV1004(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+async function pullCloudStateWithRetryV1004(attempts=3){
+  let lastErr=null;
+  for(let i=0;i<attempts;i++){
+    try{return await pullCloudState(true)}catch(err){lastErr=err;if(i<attempts-1)await cutziWaitV1004(120*(i+1))}
+  }
+  throw lastErr||new Error('Salondata kon niet worden geladen');
 }
 function activePrototypeAccount(){return cutziCloudAccount}
 function setAuthState(loggedIn){document.body.dataset.auth=loggedIn?'in':'out'}
@@ -3220,13 +3272,33 @@ createPrototypeAccountV24=async function(){
     setSignupErrorV24('signupSalonErrorV24',err.status===409?'Er bestaat al een account voor dit e-mailadres. Ga terug naar inloggen.':(err.data?.error||'Account aanmaken mislukt. Controleer je verbinding.'));return false;
   }
 };
-attemptLogin=async function(){
-  const email=(document.getElementById('loginEmail').value||'').trim().toLowerCase(),password=document.getElementById('loginPassword').value||'',remember=!!document.getElementById('loginRemember')?.checked,error=document.getElementById('loginError');
+async function attemptOnlineLoginV1005(){
+  const email=(document.getElementById('loginEmail').value||'').trim().toLowerCase(),password=document.getElementById('loginPassword').value||'',remember=!!document.getElementById('loginRemember')?.checked,error=document.getElementById('loginError'),submit=document.getElementById('loginSubmit');
   if(!email||!password){error.textContent='Vul je e-mailadres en wachtwoord in.';error.classList.add('show');return false}
+  error.classList.remove('show');if(submit){submit.disabled=true;submit.dataset.originalText=submit.textContent;submit.textContent='Inloggen…'}
+  let payload;
   try{
-    const payload=await cutziApi('/login',{method:'POST',body:JSON.stringify({email,password,remember})});
-    cutziCloudAccount=payload.account;await pullCloudState(true);cutziCloudReady=true;error.classList.remove('show');closeLogin();renderCloudSyncedState();showToast('Welkom, '+(cutziCloudAccount?.fullName?.split(/\s+/)[0]||'terug'));return true;
-  }catch(err){error.textContent=err.status===401?'E-mailadres of wachtwoord klopt niet.':(err.data?.error||'Inloggen mislukt. Controleer je verbinding.');error.classList.add('show');return false}
+    payload=await cutziApi('/login',{method:'POST',body:JSON.stringify({email,password,remember})});
+  }catch(err){
+    error.textContent=err.status===401?'E-mailadres of wachtwoord klopt niet.':(err.data?.error||'Inloggen mislukt. Controleer je verbinding.');error.classList.add('show');
+    if(submit){submit.disabled=false;submit.textContent=submit.dataset.originalText||'Inloggen'}
+    return false;
+  }
+  cutziCloudAccount=payload.account;
+  try{
+    await cutziWaitV1004(80);
+    await pullCloudStateWithRetryV1004(3);
+  }catch(stateErr){
+    let sessionOk=false;
+    try{const me=await cutziApi('/me');cutziCloudAccount=me.account||cutziCloudAccount;sessionOk=true}catch(_){}
+    error.textContent=sessionOk?'Je login is aanvaard, maar de salondata kon niet worden geladen. Vernieuw de pagina en probeer opnieuw.':'Je login is aanvaard, maar de beveiligde sessie kon niet worden gestart. Vernieuw de pagina en probeer opnieuw.';
+    error.classList.add('show');cutziCloudReady=false;
+    if(submit){submit.disabled=false;submit.textContent=submit.dataset.originalText||'Inloggen'}
+    return false;
+  }
+  cutziCloudReady=true;error.classList.remove('show');closeLogin();renderCloudSyncedState();showToast('Welkom, '+(cutziCloudAccount?.fullName?.split(/\s+/)[0]||'terug'));
+  if(submit){submit.disabled=false;submit.textContent=submit.dataset.originalText||'Inloggen'}
+  return true;
 };
 saveAccountSettingsV85=async function(){
   const current=activePrototypeAccount();if(!current)return showToast('Geen actief account gevonden');
@@ -4554,7 +4626,7 @@ renderVisitModal=function(){
 
 /* Initialisation */
 
-document.getElementById('loginFormV22').addEventListener('submit',e=>{e.preventDefault();attemptLogin()});document.getElementById('loginPasswordToggle').onclick=()=>{const inp=document.getElementById('loginPassword'),btn=document.getElementById('loginPasswordToggle'),show=inp.type==='password';inp.type=show?'text':'password';btn.setAttribute('aria-pressed',show?'true':'false');btn.setAttribute('aria-label',show?'Wachtwoord verbergen':'Wachtwoord tonen')};document.getElementById('signupPasswordToggleV59').onclick=()=>{const inp=document.getElementById('signupPasswordV24'),btn=document.getElementById('signupPasswordToggleV59'),show=inp.type==='password';inp.type=show?'text':'password';btn.setAttribute('aria-pressed',show?'true':'false');btn.setAttribute('aria-label',show?'Wachtwoord verbergen':'Wachtwoord tonen')};document.getElementById('forgotPasswordV22').onclick=()=>showToast('Wachtwoordherstel per e-mail is nog niet actief in deze testomgeving.');document.getElementById('createAccountV22').onclick=openSignupV24;document.getElementById('signupBackToLoginV24').onclick=closeSignupV24;document.getElementById('signupBackV24').onclick=()=>showSignupStepV24(1);document.getElementById('signupPasswordV24').addEventListener('input',updateSignupPasswordStrengthV24);document.getElementById('signupAccountFormV24').addEventListener('submit',e=>{e.preventDefault();validateSignupAccountV24()});document.getElementById('signupSalonFormV24').addEventListener('submit',e=>{e.preventDefault();createPrototypeAccountV24()});document.getElementById('loginSupportV22').onclick=()=>showToast('Cutzi online test · desktop en mobiel delen dezelfde omgeving');document.getElementById('privacyV22').onclick=()=>showToast('Testgegevens worden centraal opgeslagen in Cloudflare D1');document.getElementById('securityV22').onclick=()=>showToast('Beveiligde cloudsessie via een HttpOnly-cookie; wachtwoorden worden gehasht opgeslagen');
+document.getElementById('loginFormV22').addEventListener('submit',async e=>{e.preventDefault();await attemptLogin()});document.getElementById('loginPasswordToggle').onclick=()=>{const inp=document.getElementById('loginPassword'),btn=document.getElementById('loginPasswordToggle'),show=inp.type==='password';inp.type=show?'text':'password';btn.setAttribute('aria-pressed',show?'true':'false');btn.setAttribute('aria-label',show?'Wachtwoord verbergen':'Wachtwoord tonen')};document.getElementById('signupPasswordToggleV59').onclick=()=>{const inp=document.getElementById('signupPasswordV24'),btn=document.getElementById('signupPasswordToggleV59'),show=inp.type==='password';inp.type=show?'text':'password';btn.setAttribute('aria-pressed',show?'true':'false');btn.setAttribute('aria-label',show?'Wachtwoord verbergen':'Wachtwoord tonen')};document.getElementById('forgotPasswordV22').onclick=()=>showToast('Wachtwoordherstel per e-mail is nog niet actief in deze testomgeving.');document.getElementById('createAccountV22').onclick=openSignupV24;document.getElementById('signupBackToLoginV24').onclick=closeSignupV24;document.getElementById('signupBackV24').onclick=()=>showSignupStepV24(1);document.getElementById('signupPasswordV24').addEventListener('input',updateSignupPasswordStrengthV24);document.getElementById('signupAccountFormV24').addEventListener('submit',e=>{e.preventDefault();validateSignupAccountV24()});document.getElementById('signupSalonFormV24').addEventListener('submit',e=>{e.preventDefault();createPrototypeAccountV24()});document.getElementById('loginSupportV22').onclick=()=>showToast('Cutzi online test · desktop en mobiel delen dezelfde omgeving');document.getElementById('privacyV22').onclick=()=>showToast('Testgegevens worden centraal opgeslagen in Cloudflare D1');document.getElementById('securityV22').onclick=()=>showToast('Beveiligde cloudsessie via een HttpOnly-cookie; wachtwoorden worden gehasht opgeslagen');
 document.getElementById('newClientTopV50')?.addEventListener('click',()=>openCRMClient());
 bindAppearanceSettings();applyAppearance();syncAccentPickers();renderAppearance();renderBranding();renderAccountFooter();renderSettings();renderTeam();normalizeTreatmentTaxonomyV47();renderTreatments();fillBookingForm();renderAgenda();renderHomeDashboard();renderClients();renderAnalytics();renderBookingSummary();updateWaitlistBadge();enhancePremiumControlsV34(document);document.getElementById('customizeDashboardBtn')?.addEventListener('click',openDashboardCustomizer);document.getElementById('sidebarAccountOpenV85')?.addEventListener('click',openAccountSettingsV85);document.getElementById('saveAccountProfileV85')?.addEventListener('click',saveAccountSettingsV85);document.getElementById('saveAccountPasswordV86')?.addEventListener('click',saveAccountPasswordV86);bindAccountPasswordTogglesV86();document.getElementById('logoutBtn')?.addEventListener('click',requestLogoutPrototype);document.getElementById('loginRemember').checked=true;setAuthState(false);goView('home');bootstrapOnlineAuth();
 
