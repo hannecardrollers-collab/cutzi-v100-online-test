@@ -2583,6 +2583,33 @@ body.agenda-focus-v1006 #view-agenda .agenda-body.overview-mode{max-height:none!
 body.agenda-focus-v1006 .mobile-bottom-nav-v52,body.agenda-focus-v1006 .mobile-quick-actions-v52,body.agenda-focus-v1006 .mobile-more-backdrop-v52,body.agenda-focus-v1006 .pilot-badge-v52{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 @media(max-width:820px){#view-agenda .agenda-actions{order:2!important;margin-left:auto!important;flex:0 0 auto!important;overflow:visible!important}#view-agenda .agenda-view-switch{order:3!important}body.agenda-focus-v1006 #view-agenda{padding:0!important}body.agenda-focus-v1006 #view-agenda .agenda-shell{height:100dvh!important;border-radius:0!important;border-left:0!important;border-right:0!important}body.agenda-focus-v1006 #view-agenda .agenda-toolbar{padding-top:max(10px,env(safe-area-inset-top))!important}body.agenda-focus-v1006 #view-agenda .agenda-body{max-height:none!important}}
 </style>
+<style id="cutziAgendaDevPolish">
+/* Cutzi dev — stronger glass visibility in agenda fullscreen + closed-day copy/layout polish. */
+body.agenda-focus-v1006 #view-agenda{
+  background:rgba(7,8,11,.08)!important;
+  backdrop-filter:blur(4px) saturate(112%)!important;
+  -webkit-backdrop-filter:blur(4px) saturate(112%)!important;
+}
+body.agenda-focus-v1006 #agendaShell.glass{
+  background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.018))!important;
+  backdrop-filter:blur(16px) saturate(116%)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(116%)!important;
+  border-color:rgba(255,255,255,.13)!important;
+}
+body.agenda-focus-v1006 #view-agenda .agenda-toolbar{background:rgba(12,13,16,.18)!important;backdrop-filter:blur(18px) saturate(112%)!important;-webkit-backdrop-filter:blur(18px) saturate(112%)!important}
+body.agenda-focus-v1006 #view-agenda .time-col{background:rgba(13,14,17,.24)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important}
+body.agenda-focus-v1006 #view-agenda .staff-head{background:rgba(12,13,17,.27)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important}
+body.agenda-focus-v1006 #view-agenda .grid-canvas{background-color:rgba(4,5,8,.025)!important}
+body[data-glass="light"].agenda-focus-v1006 #view-agenda{background:rgba(246,241,244,.10)!important}
+body[data-glass="light"].agenda-focus-v1006 #agendaShell.glass{background:linear-gradient(145deg,rgba(255,255,255,.30),rgba(255,255,255,.11))!important}
+body[data-glass="light"].agenda-focus-v1006 #view-agenda .agenda-toolbar{background:rgba(255,255,255,.24)!important}
+body[data-glass="light"].agenda-focus-v1006 #view-agenda .time-col{background:rgba(255,255,255,.25)!important}
+body[data-glass="light"].agenda-focus-v1006 #view-agenda .staff-head{background:rgba(255,255,255,.30)!important}
+body[data-glass="light"].agenda-focus-v1006 #view-agenda .grid-canvas{background-color:rgba(255,255,255,.035)!important}
+#view-agenda .agenda-closed-state-v1002>div{display:flex!important;flex-direction:column!important;align-items:center!important;gap:7px!important;max-width:760px!important}
+#view-agenda .agenda-closed-state-v1002 strong{display:block!important;margin:0!important;line-height:1.25!important}
+#view-agenda .agenda-closed-state-v1002 span{display:block!important;line-height:1.55!important}
+</style>
 </head>
 <body data-storage-mode="cloud">
 <div class="bg-scene" id="bgScene"></div>
@@ -4604,7 +4631,7 @@ renderAgendaDay=function(){
   const start=Math.floor(toMin(hours.start||'09:00')/60)*60,end=Math.ceil(toMin(hours.end||'18:00')/60)*60,hoursCount=Math.max(1,(end-start)/60);
   const paintTimeAxis=()=>{timeCol.style.paddingTop='74px';timeCol.innerHTML=Array.from({length:hoursCount+1},(_,i)=>`<div class="time-label" style="height:${AGENDA_HOUR_PX_V68}px">${fromMin(start+i*60)}</div>`).join('')};
   document.documentElement.style.setProperty('--agenda-columns',1);paintTimeAxis();
-  if(!hours.open){head.style.gridTemplateColumns='1fr';head.innerHTML='<div class="agenda-closed-head-v1002">Gesloten</div>';canvas.style.display='block';canvas.style.height=(hoursCount*AGENDA_HOUR_PX_V68)+'px';canvas.style.backgroundSize=`100% ${AGENDA_HOUR_PX_V68}px`;canvas.innerHTML='<div class="agenda-closed-state-v1002"><div><strong>Salon gesloten</strong><span>De uren blijven zichtbaar als referentie. Activeer deze dag bij Instellingen → Openingstijden om afspraken te plannen.</span></div></div>';updateAgendaMoveBannerV68();return}
+  if(!hours.open){head.style.gridTemplateColumns='1fr';head.innerHTML='<div class="agenda-closed-head-v1002">Gesloten</div>';canvas.style.display='block';canvas.style.height=(hoursCount*AGENDA_HOUR_PX_V68)+'px';canvas.style.backgroundSize=`100% ${AGENDA_HOUR_PX_V68}px`;canvas.innerHTML='<div class="agenda-closed-state-v1002"><div><strong>Salon gesloten.</strong><span>De uren worden alleen als referentie getoond. Activeer deze dag via Instellingen → Openingstijden om afspraken te kunnen plannen.</span></div></div>';updateAgendaMoveBannerV68();return}
   if(!state.employees.length){head.style.gridTemplateColumns='1fr';head.innerHTML='<div class="agenda-empty-head-v1002">Nog geen medewerkers</div>';canvas.style.display='block';canvas.style.height=(hoursCount*AGENDA_HOUR_PX_V68)+'px';canvas.style.backgroundSize=`100% ${AGENDA_HOUR_PX_V68}px`;canvas.innerHTML='<div class="agenda-no-team-state-v1002"><div><strong>Nog geen medewerkers</strong><span>De uren zijn al zichtbaar. Voeg een medewerker toe bij Team & planning om de dagagenda te vullen.</span></div></div>';updateAgendaMoveBannerV68();return}
   const events={};state.employees.forEach(e=>events[e.id]=[]);
   const activeBookings=(state.bookings||[]).filter(b=>b.date===agendaDate&&!['cancelled','no_show'].includes(b.status));
